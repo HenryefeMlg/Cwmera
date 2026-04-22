@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tam Ekran Kamera</title>
+    <title>Tam Ekran Mirror Kamera</title>
     <style>
-        /* Tüm ekranı kaplaması için temel ayarlar */
         body, html {
             margin: 0;
             padding: 0;
@@ -13,25 +12,25 @@
             height: 100%;
             overflow: hidden;
             background-color: #000;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
         }
 
-        /* Kamera görüntüsü */
+        /* Kamera görüntüsü ve Aynalama (Mirror) */
         #videoElement {
             width: 100vw;
             height: 100vh;
-            object-fit: cover; /* Görüntünün ekranı tamamen doldurmasını sağlar */
+            object-fit: cover;
+            transform: scaleX(-1); /* Görüntüyü yatayda ters çevirir (Aynalar) */
         }
 
-        /* Hata ve yükleme ekranı (overlay) */
         #overlay {
-            display: none; /* Başlangıçta gizli */
+            display: none;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(0, 0, 0, 0.9);
             color: white;
             flex-direction: column;
             justify-content: center;
@@ -41,51 +40,40 @@
 
         #statusText {
             font-size: 1.5rem;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
             text-align: center;
         }
 
-        /* Düzelt butonu */
         #fixBtn {
-            padding: 15px 40px;
-            font-size: 1.1rem;
+            padding: 12px 35px;
+            font-size: 1rem;
             cursor: pointer;
-            background-color: #27ae60;
+            background-color: #e74c3c;
             color: white;
             border: none;
-            border-radius: 30px;
-            transition: transform 0.2s, background 0.3s;
+            border-radius: 5px;
         }
 
-        #fixBtn:hover {
-            background-color: #2ecc71;
-            transform: scale(1.05);
-        }
-
-        /* Yükleme çubuğu konteynırı */
+        /* Yükleme Çubuğu */
         #loader-container {
             display: none;
-            width: 300px;
-            height: 6px;
-            background: #333;
-            border-radius: 10px;
-            margin-top: 20px;
+            width: 280px;
+            height: 4px;
+            background: #222;
+            margin-top: 25px;
             position: relative;
             overflow: hidden;
         }
 
-        /* Soldan sağa hareket eden çizgi */
         #loader-bar {
             width: 0%;
             height: 100%;
             background: #3498db;
             position: absolute;
             left: 0;
-            border-radius: 10px;
         }
 
-        /* Çizgi ilerleme animasyonu */
-        @keyframes fillBar {
+        @keyframes progress {
             from { width: 0%; }
             to { width: 100%; }
         }
@@ -113,56 +101,47 @@
         const loaderBar = document.querySelector("#loader-bar");
 
         let stream = null;
-        let stopTimer = null;
+        let timer = null;
 
-        // Kamerayı Başlatma Fonksiyonu
         async function startCamera() {
             try {
-                // Kamera akışını al
                 stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 video.srcObject = stream;
                 
-                // 5 dakika (300.000 milisaniye) sonra durdur
-                stopTimer = setTimeout(stopCamera, 300000); 
+                // 5 Dakika sonra durdur (300.000 ms)
+                timer = setTimeout(stopCamera, 300000); 
             } catch (err) {
-                console.error("Hata: ", err);
-                statusText.innerText = "Kameraya erişim sağlanamadı!";
+                statusText.innerText = "Kameraya ulaşılamadı!";
                 overlay.style.display = "flex";
                 fixBtn.style.display = "none";
             }
         }
 
-        // Kamerayı Durdurma Fonksiyonu
         function stopCamera() {
             if (stream) {
-                // Kamera donanımını serbest bırak
                 stream.getTracks().forEach(track => track.stop());
             }
-            // Arayüzü güncelle
             overlay.style.display = "flex";
             loaderContainer.style.display = "none";
             fixBtn.style.display = "block";
             statusText.innerText = "Kamera durduruldu, manuel olarak düzeltin.";
         }
 
-        // Düzelt Butonuna Tıklandığında
         fixBtn.addEventListener("click", () => {
-            fixBtn.style.display = "none"; // Butonu gizle
+            fixBtn.style.display = "none";
             statusText.innerText = "Yükleniyor...";
-            loaderContainer.style.display = "block"; // Çizgiyi göster
+            loaderContainer.style.display = "block";
             
-            // Animasyonu başlat (3 saniye sürer)
-            loaderBar.style.animation = "fillBar 3s linear forwards";
+            // 3 saniyelik yükleme çizgisi animasyonu
+            loaderBar.style.animation = "progress 3s linear forwards";
 
-            // 3 saniye bekle ve kamerayı tekrar aç
             setTimeout(() => {
-                overlay.style.display = "none"; // Karartmayı kaldır
-                loaderBar.style.animation = "none"; // Animasyonu sıfırla
-                startCamera(); // Kamerayı yeniden başlat
+                overlay.style.display = "none";
+                loaderBar.style.animation = "none";
+                startCamera();
             }, 3000);
         });
 
-        // Sayfa ilk açıldığında kamerayı başlat
         startCamera();
     </script>
 </body>
